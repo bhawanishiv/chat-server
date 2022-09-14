@@ -1,3 +1,4 @@
+import { isValidObjectId } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 import handler from 'app/api/middlewares/handler';
@@ -9,7 +10,6 @@ import Failure from 'app/lib/Failure';
 import User from 'app/models/User';
 import { checkToken, getUser } from 'app/api/middlewares/auth';
 import { checkRole } from 'app/api/middlewares/role';
-import { isValidObjectId } from 'mongoose';
 
 export const adminV1CreateUser = [
   handler(checkToken),
