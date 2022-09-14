@@ -22,3 +22,16 @@ export const getUserData = (
 
   return res;
 };
+
+export const getGroupData = (
+  group,
+  inputs = ['createdBy', 'createdAt', 'updatedAt', 'name']
+) => {
+  const data = _.pick(group, inputs);
+  const res = {
+    groupId: group._id.toString(),
+    ...data,
+  };
+
+  return res;
+};

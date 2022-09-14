@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import Group from 'app/models/Group';
 import GroupMember from 'app/models/GroupMember';
-import { getUserData } from 'app/lib/utils';
+import { getGroupData, getUserData } from 'app/lib/utils';
 
 export const getGroup =
   (cb, key = 'group') =>
@@ -14,18 +14,10 @@ export const getGroup =
     let groupResult;
 
     if (group) {
-      const data = _.pick(
-        group.toJSON(),
-        'createdBy',
-        'createdAt',
-        'updatedAt',
-        'name'
-      );
-
+      const { createdBy, ...data } = getGroupData(group);
       groupResult = {
-        groupId: group._id.toString(),
         ...data,
-        createdBy: getUserData(data.createdBy),
+        createdBy: getUserData(createdBy),
       };
     }
 
@@ -58,7 +50,43 @@ export const getGroupMember =
         memberId: groupMember._id.toString(),
         ...data,
         user: getUserData(groupMember.userId),
-        group: groupMember.groupId,
+        group: getGroupData(groupMember.groupId),
+        addedBy: getUserData(groupMember.addedBy),
+      };
+    }
+
+    req[key] = groupMemberResult;
+
+    next();
+  };
+
+export const getGroupMemberByUserIdAndGroupId =
+  (cb, key = 'groupMember') =>
+  async (req, res, next) => {
+    const { userId, groupId } = await cb(req, res, next);
+    const groupMember = await GroupMember.findOne({
+      $and: [{ userId }, { groupId }],
+    })
+      .populate('userId')
+      .populate('groupId')
+      .populate('addedBy')
+      .exec();
+
+    let groupMemberResult;
+
+    if (groupMember) {
+      const data = _.pick(
+        groupMember.toJSON(),
+        'status',
+        'createdAt',
+        'updatedAt'
+      );
+
+      groupMemberResult = {
+        ...data,
+        memberId: groupMember._id.toString(),
+        group: getGroupData(groupMember.groupId),
+        user: getUserData(groupMember.userId),
         addedBy: getUserData(groupMember.addedBy),
       };
     }

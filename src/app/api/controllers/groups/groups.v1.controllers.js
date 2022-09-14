@@ -4,17 +4,18 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
 import handler from 'app/api/middlewares/handler';
+import { checkToken, getUser } from 'app/api/middlewares/auth';
+import {
+  getGroup,
+  getGroupMemberByUserIdAndGroupId,
+} from 'app/api/middlewares/groups';
 
 import Failure from 'app/lib/Failure';
 import ERROR_CODES from 'app/lib/error-codes';
 
 import User from 'app/models/User';
 import Group from 'app/models/Group';
-
-import { checkToken, getUser } from 'app/api/middlewares/auth';
 import GroupMember from 'app/models/GroupMember';
-import { getGroup } from 'app/api/middlewares/groups';
-import { async } from '@babel/runtime/helpers/regeneratorRuntime';
 
 export const groupV1Create = [
   handler(checkToken),
@@ -53,11 +54,21 @@ export const groupV1Create = [
     await groupCreator.save();
 
     const payload = {
-      group: {
-        id: group._id.toString(),
-        ..._.pick(group.toJSON(), 'name', 'createdAt', 'updatedAt'),
-        createdBy: user,
+      member: {
+        memberId: groupCreator._id.toString(),
+        ..._.pick(groupCreator.toJSON(), 'createdAt', 'updatedAt'),
       },
+      group: {
+        groupId: group._id.toString(),
+        ..._.pick(
+          group.toJSON(),
+          'name',
+          'createdBy',
+          'createdAt',
+          'updatedAt'
+        ),
+      },
+      addedBy: user,
     };
 
     res.json(payload);
@@ -101,14 +112,74 @@ export const groupV1Remove = [
 ];
 
 export const groupV1MemberAdd = [
-  handler(checkToken),
-  handler(getUser((req) => req.decodedAccessToken.uid, 'user')),
-  handler(async (req, res, next) => {
-    if (!req.user) throw new Failure('Invalid user', ERROR_CODES.NOT_FOUND);
-    next();
-  }),
   handler(async (req, res, next) => {
     const { groupId, userId } = req.params;
+    if (!isValidObjectId(groupId))
+      throw new Failure('Invalid groupId provided', ERROR_CODES.INVALID_INPUT);
+
+    if (!isValidObjectId(userId))
+      throw new Failure('Invalid userId provided', ERROR_CODES.INVALID_INPUT);
+
+    next();
+  }),
+  handler(checkToken),
+  handler(
+    getGroupMemberByUserIdAndGroupId(
+      (req) => ({
+        userId: req.decodedAccessToken.uid,
+        groupId: req.params.groupId,
+      }),
+      'groupMember'
+    )
+  ),
+  handler(async (req, res, next) => {
+    const { groupMember } = req;
+    if (!groupMember) {
+      throw new Failure('Unauthorized access', ERROR_CODES.UNAUTHORIZED);
+    }
+
+    if (!groupMember.group) {
+      throw new Failure('Invalid group', ERROR_CODES.NOT_FOUND);
+    }
+
+    next();
+  }),
+  handler(getUser((req) => req.params.userId, 'userToAdd')),
+  handler(async (req, res, next) => {
+    const { groupId, userId } = req.params;
+    const { groupMember, userToAdd } = req;
+
+    if (!userToAdd) throw new Failure('Invalid user', ERROR_CODES.NOT_FOUND);
+
+    const duplicateMember = await GroupMember.findOne({
+      $and: [{ userId }, { groupId }],
+    }).exec();
+
+    if (duplicateMember) {
+      throw new Failure(
+        'User already is the member of this group',
+        ERROR_CODES.INVALID_INPUT
+      );
+    }
+
+    const newMember = new GroupMember({
+      groupId,
+      userId,
+      addedBy: groupMember.user.uid,
+    });
+
+    await newMember.save();
+
+    const payload = {
+      member: {
+        memberId: newMember._id.toString(),
+        ..._.pick(newMember.toJSON(), 'createdAt', 'updatedAt'),
+      },
+      group: groupMember.group,
+      addedBy: groupMember.user,
+    };
+
+    res.json(payload);
   }),
 ];
 
