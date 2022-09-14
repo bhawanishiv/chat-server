@@ -2,11 +2,6 @@ import { Schema, model } from 'mongoose';
 
 export const userSchema = new Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     firstName: {
       type: String,
       required: true,
@@ -15,13 +10,27 @@ export const userSchema = new Schema(
       type: String,
       required: true,
     },
-    roleId: {
-      type: Schema.Types.ObjectId,
-      ref: 'AuthRole',
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    phoneNumber: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    hashPswd: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      default: 'USER',
       required: true,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 const User = model('User', userSchema);
