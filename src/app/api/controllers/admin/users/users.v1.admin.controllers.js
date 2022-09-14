@@ -1,0 +1,130 @@
+import bcrypt from 'bcrypt';
+
+import handler from 'app/api/middlewares/handler';
+
+import { PSWD_HASH_ROUNDS } from 'app/lib/constants';
+import ERROR_CODES from 'app/lib/error-codes';
+import Failure from 'app/lib/Failure';
+
+import User from 'app/models/User';
+import { checkToken, getUser } from 'app/api/middlewares/auth';
+import { checkRole } from 'app/api/middlewares/role';
+import { isValidObjectId } from 'mongoose';
+
+export const adminV1CreateUser = [
+  handler(checkToken),
+  handler(getUser((req) => req.decodedAccessToken.uid, 'user')),
+  handler(async (req, res, next) => {
+    if (!req.user) throw new Failure('Invalid user', ERROR_CODES.NOT_FOUND);
+    next();
+  }),
+  handler(checkRole('ADMIN', 'user')),
+  handler(async (req, res) => {
+    const { firstName, lastName, email, phoneNumber, password } = req.body;
+
+    const existingUser = await User.findOne({
+      $or: [{ email }, { phoneNumber }],
+    }).exec();
+
+    if (existingUser) {
+      if (existingUser.email === email) {
+        throw new Failure('Email already exists', ERROR_CODES.INVALID_INPUT, {
+          param: 'email',
+        });
+      }
+      if (phoneNumber) {
+        throw new Failure(
+          'Phone number already exists',
+          ERROR_CODES.INVALID_INPUT,
+          { param: 'phoneNumber' }
+        );
+      }
+    }
+
+    const hashedPswd = await bcrypt.hash(password, PSWD_HASH_ROUNDS);
+
+    const params = {
+      firstName,
+      lastName,
+      email,
+    };
+
+    if (phoneNumber) {
+      params.phoneNumber = phoneNumber;
+    }
+
+    const user = new User({ ...params, hashPswd: hashedPswd });
+    await user.save();
+
+    const createdUser = { uid: user._id.toString(), ...params };
+
+    res.json({ user: createdUser });
+  }),
+];
+
+export const adminV1UpdateUser = [
+  handler(checkToken),
+  handler(getUser((req) => req.decodedAccessToken.uid, 'user')),
+  handler(async (req, res, next) => {
+    if (!req.user) throw new Failure('Invalid user', ERROR_CODES.NOT_FOUND);
+    next();
+  }),
+  handler(checkRole('ADMIN', 'user')),
+  handler(async (req, res) => {
+    const { firstName, lastName, email, phoneNumber, password, uid, role } =
+      req.body;
+
+    const hashedPswd = await bcrypt.hash(password, PSWD_HASH_ROUNDS);
+
+    if (!isValidObjectId(uid))
+      throw new Failure('Invalid user to update', ERROR_CODES.INVALID_INPUT);
+
+    const duplicateEmailUser = await User.findOne({
+      email,
+    }).exec();
+
+    if (duplicateEmailUser && duplicateEmailUser._id.toString() !== uid) {
+      throw new Failure('Email already exists', ERROR_CODES.CONFLICTS);
+    }
+
+    if (phoneNumber) {
+      const duplicatePhoneUser = await User.findOne({
+        phoneNumber,
+      }).exec();
+
+      if (duplicatePhoneUser && duplicatePhoneUser._id.toString() !== uid) {
+        throw new Failure('Phone number already exists', ERROR_CODES.CONFLICTS);
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      uid,
+      {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        hashPswd: hashedPswd,
+        role,
+      },
+      { returnDocument: 'after' }
+    ).exec();
+
+    if (!updatedUser)
+      throw new Failure('Invalid update user', ERROR_CODES.INVALID_INPUT);
+
+    const userResult = {
+      uid: updatedUser._id.toString(),
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      role: updatedUser.role,
+    };
+
+    if (updatedUser.phoneNumber) {
+      userResult.phoneNumber = updatedUser.phoneNumber;
+    }
+
+    res.json({ user: userResult });
+  }),
+];

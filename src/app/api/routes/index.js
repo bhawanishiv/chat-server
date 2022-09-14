@@ -2,17 +2,13 @@ import { Router } from 'express';
 
 import errorHandler from 'app/api/middlewares/error';
 
-import clientRoutes from './client';
-import oAuth2Routes from './oAuth2';
 import authRoutes from './auth';
-import usersRoutes from './users';
+import adminRoutes from './admin';
 
 const router = Router();
 
-router.use('/clients', clientRoutes);
-router.use('/oauth2', oAuth2Routes);
 router.use('/auth', authRoutes);
-router.use('/users', usersRoutes);
+router.use('/admin', adminRoutes);
 
 router.use(errorHandler);
 

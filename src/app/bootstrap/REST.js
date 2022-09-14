@@ -1,6 +1,6 @@
-import bodyParser from "body-parser";
+import bodyParser from 'body-parser';
 
-import apiRoutes from "app/api/routes";
+import apiRoutes from 'app/api/routes';
 
 const routes = (app) => {
   app.use(bodyParser.urlencoded({ extended: false }));
