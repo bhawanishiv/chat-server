@@ -5,6 +5,7 @@ import ERROR_CODES from 'app/lib/error-codes';
 import Failure from 'app/lib/Failure';
 
 import User from 'app/models/User';
+import { getUserData } from 'app/lib/utils';
 
 export const checkToken = async (req, res, next) => {
   const header = req.headers.authorization;
@@ -34,17 +35,7 @@ export const getUser =
     let userResult;
 
     if (user) {
-      userResult = {
-        uid: user._id.toString(),
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-      };
-
-      if (user.phoneNumber) {
-        userResult.phoneNumber = user.phoneNumber;
-      }
+      userResult = getUserData(user);
     }
 
     req[key] = userResult;
