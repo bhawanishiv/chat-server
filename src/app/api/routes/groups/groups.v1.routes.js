@@ -14,7 +14,7 @@ const router = Router();
 
 router.post('/:groupId/members/:userId', groupV1MemberAdd);
 
-router.delete('/:groupId/members/:memberId', groupV1MemberRemove);
+router.delete('/members/:memberId', groupV1MemberRemove);
 
 router.delete('/:groupId', groupV1Remove);
 

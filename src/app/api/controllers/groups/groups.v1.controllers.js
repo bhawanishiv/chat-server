@@ -1,19 +1,17 @@
 import { isValidObjectId } from 'mongoose';
 import _ from 'lodash';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 
 import handler from 'app/api/middlewares/handler';
 import { checkToken, getUser } from 'app/api/middlewares/auth';
 import {
   getGroup,
+  getGroupMember,
   getGroupMemberByUserIdAndGroupId,
 } from 'app/api/middlewares/groups';
 
 import Failure from 'app/lib/Failure';
 import ERROR_CODES from 'app/lib/error-codes';
 
-import User from 'app/models/User';
 import Group from 'app/models/Group';
 import GroupMember from 'app/models/GroupMember';
 
@@ -184,12 +182,57 @@ export const groupV1MemberAdd = [
 ];
 
 export const groupV1MemberRemove = [
-  handler(async (req, res) => {
-    if (!req.session.rt) {
-      throw new Failure('Invalid session', ERROR_CODES.INVALID_INPUT);
+  handler(async (req, res, next) => {
+    const { memberId } = req.params;
+    if (!isValidObjectId(memberId))
+      throw new Failure('Invalid memberId provided', ERROR_CODES.INVALID_INPUT);
+
+    next();
+  }),
+  handler(checkToken),
+  handler(getGroupMember((req) => req.params.memberId, 'memberToRemove')),
+  handler(async (req, res, next) => {
+    const { memberToRemove } = req;
+    if (!memberToRemove) {
+      throw new Failure('Invalid member', ERROR_CODES.NOT_FOUND);
     }
 
-    req.session.destroy();
-    res.json({ logout: true });
+    if (!memberToRemove.group) {
+      throw new Failure('Invalid group', ERROR_CODES.NOT_FOUND);
+    }
+
+    next();
+  }),
+  handler(
+    getGroupMemberByUserIdAndGroupId(
+      (req) => ({
+        userId: req.decodedAccessToken.uid,
+        groupId: req.memberToRemove.group.groupId,
+      }),
+      'groupMember'
+    )
+  ),
+  handler(async (req, res, next) => {
+    const { groupMember, memberToRemove } = req;
+
+    if (!groupMember)
+      throw new Failure('Unauthorized access', ERROR_CODES.UNAUTHORIZED);
+
+    if (!groupMember.group) {
+      throw new Failure('Invalid group', ERROR_CODES.NOT_FOUND);
+    }
+
+    const removedMember = await GroupMember.findByIdAndRemove(
+      memberToRemove.memberId
+    ).exec();
+
+    if (!removedMember)
+      throw new Failure('Unable to remove the group', ERROR_CODES.SERVER_ERROR);
+
+    const payload = {
+      member: memberToRemove,
+    };
+
+    res.json(payload);
   }),
 ];
