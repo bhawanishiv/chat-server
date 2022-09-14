@@ -6,7 +6,9 @@
 # testing
 /coverage
 
+# builds
 /dist/
+/build/
 
 # misc
 .DS_Store
