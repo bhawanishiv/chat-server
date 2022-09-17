@@ -9,7 +9,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --require @babel/register tests/**/*",
     "build": "babel src --out-dir build",
     "start": "node build/server.js",
     "lint": "eslint src",
@@ -24,14 +24,18 @@
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.19.1",
     "babel-plugin-module-resolver": "^4.1.0",
+    "chai": "^4.3.6",
     "eslint": "^8.23.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-babel-module": "^5.3.1",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "mocha": "^10.0.0",
     "nodemon": "^2.0.19",
-    "prettier": "^2.7.1"
+    "prettier": "^2.7.1",
+    "supertest": "^6.2.4",
+    "unique-names-generator": "^4.7.1"
   },
   "dependencies": {
     "@babel/runtime": "^7.19.0",

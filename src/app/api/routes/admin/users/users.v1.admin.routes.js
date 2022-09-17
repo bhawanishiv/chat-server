@@ -1,4 +1,4 @@
-import { body, oneOf } from 'express-validator';
+import { body } from 'express-validator';
 import { Router } from 'express';
 
 import validate from 'app/api/middlewares/validate';
@@ -30,13 +30,13 @@ router.post(
   '/v1/update',
   validate([
     body('uid').notEmpty().isString(),
-    body('firstName').notEmpty().isString(),
-    body('lastName').notEmpty().isString(),
-    body('email').notEmpty().isEmail(),
+    body('firstName').optional().isString(),
+    body('lastName').optional().isString(),
+    body('email').optional().isEmail(),
     body('phoneNumber').optional().isMobilePhone('en-IN'),
     body('role').isIn([undefined, 'USER', 'ADMIN']),
     body('password')
-      .notEmpty()
+      .optional()
       .isLength({ min: STR_LENGTHS.password.min })
       .matches(REGEX.specialCharacter),
   ]),
