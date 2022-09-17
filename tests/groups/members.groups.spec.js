@@ -2,6 +2,7 @@ import {
   uniqueNamesGenerator,
   adjectives,
   animals,
+  colors,
 } from 'unique-names-generator';
 
 import supertest from 'supertest';
@@ -20,7 +21,8 @@ const ANOTHER_USER_CREDS = {
 
 const generateName = (params = {}) =>
   uniqueNamesGenerator({
-    dictionaries: [adjectives, animals],
+    dictionaries: [adjectives, animals, colors],
+
     ...params,
   });
 
