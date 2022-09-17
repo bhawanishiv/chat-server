@@ -2,6 +2,7 @@ import {
   uniqueNamesGenerator,
   adjectives,
   animals,
+  colors,
 } from 'unique-names-generator';
 
 import supertest from 'supertest';
@@ -20,12 +21,12 @@ const ANOTHER_USER_CREDS = {
 
 const generateName = (params = {}) =>
   uniqueNamesGenerator({
-    dictionaries: [adjectives, animals],
+    dictionaries: [adjectives, animals, colors],
     ...params,
   });
 
 describe('Groups', () => {
-  const groupName = generateName();
+  const groupName = generateName({ name: 20 });
   let signInUser;
   let createdGroup;
 
@@ -99,7 +100,7 @@ describe('Groups', () => {
       const res = await anotherUserAgent
         .post('/groups/v1/create')
         .send({
-          name: generateName(),
+          name: generateName({ name: 20 }),
         })
         .expect(200);
 

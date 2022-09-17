@@ -58,7 +58,7 @@ export const authV1Login = [
       {
         audience: APP_NAME,
         algorithm: 'HS256',
-        expiresIn: TIMES.auth.refreshToken,
+        expiresIn: TIMES.auth.accessToken,
         subject: userResult.uid,
       }
     );

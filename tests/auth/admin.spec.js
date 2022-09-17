@@ -2,6 +2,7 @@ import {
   uniqueNamesGenerator,
   adjectives,
   animals,
+  colors,
 } from 'unique-names-generator';
 
 import supertest from 'supertest';
@@ -13,7 +14,7 @@ const adminAgent = supertest.agent('http://localhost:8000');
 
 const generateName = () =>
   uniqueNamesGenerator({
-    dictionaries: [adjectives, animals],
+    dictionaries: [adjectives, animals, colors],
   });
 
 const USER_CREDS = { username: 'user@gmail.com', password: 'Te3Vec3@#$f3' };
