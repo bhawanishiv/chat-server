@@ -18,6 +18,7 @@ export const userSchema = new Schema(
     phoneNumber: {
       type: String,
       unique: true,
+      sparse: true,
     },
     hashPswd: {
       type: String,

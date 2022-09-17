@@ -57,7 +57,7 @@ export const adminV1CreateUser = [
     await user.save();
 
     const createdUser = { uid: user._id.toString(), ...params };
-
+    console.log(`createdUser->`, createdUser);
     res.json({ user: createdUser });
   }),
 ];
@@ -84,7 +84,7 @@ export const adminV1UpdateUser = [
     }).exec();
 
     if (duplicateEmailUser && duplicateEmailUser._id.toString() !== uid) {
-      throw new Failure('Email already exists', ERROR_CODES.CONFLICTS);
+      throw new Failure('Email already exists', ERROR_CODES.INVALID_INPUT);
     }
 
     if (phoneNumber) {
@@ -93,22 +93,28 @@ export const adminV1UpdateUser = [
       }).exec();
 
       if (duplicatePhoneUser && duplicatePhoneUser._id.toString() !== uid) {
-        throw new Failure('Phone number already exists', ERROR_CODES.CONFLICTS);
+        throw new Failure(
+          'Phone number already exists',
+          ERROR_CODES.INVALID_INPUT
+        );
       }
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      uid,
-      {
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        hashPswd: hashedPswd,
-        role,
-      },
-      { returnDocument: 'after' }
-    ).exec();
+    const params = {
+      firstName,
+      lastName,
+      email,
+      hashPswd: hashedPswd,
+      role,
+    };
+
+    if (phoneNumber) {
+      params.phoneNumber = phoneNumber;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(uid, params, {
+      returnDocument: 'after',
+    }).exec();
 
     if (!updatedUser)
       throw new Failure('Invalid update user', ERROR_CODES.INVALID_INPUT);

@@ -93,6 +93,8 @@ export const groupV1Remove = [
 
     if (!group) throw new Failure('Invalid group', ERROR_CODES.INVALID_INPUT);
 
+    console.log(`group.createdBy.uid->`, group.createdBy.uid);
+    console.log(`user.uid->`, user.uid);
     if (group.createdBy.uid !== user.uid)
       throw new Failure('Unauthorized access', ERROR_CODES.UNAUTHORIZED);
 
