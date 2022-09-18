@@ -77,7 +77,7 @@ describe('Group Members', () => {
     it('Should successfully make search users API call', async () => {
       const res = await userAgent
         .post('/users/v1/search')
-        .send({ keyword: 'red', limit: 10, skip: 0 })
+        .send({ keyword: 'user', limit: 10, skip: 0 })
         .expect(200);
 
       expect(res.body.count).to.be.an('number');
@@ -88,6 +88,14 @@ describe('Group Members', () => {
   });
 
   describe('Add a member', async () => {
+    before(async () => {
+      const res = await userAgent
+        .post('/users/v1/search')
+        .send({ keyword: 'user1', limit: 10, skip: 0 });
+
+      searchResult = res.body.users;
+    });
+
     before(async () => {
       const randomIndex = getRandomInt(searchResult.length - 1);
       searchedUser = searchResult[randomIndex];
