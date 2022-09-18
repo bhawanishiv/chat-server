@@ -9,7 +9,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "mocha --require @babel/register tests/**/*",
+    "test": "babel-node tests/test-init.js && mocha --require @babel/register tests/**/*",
     "build": "babel src --out-dir build",
     "start": "node build/server.js",
     "lint": "eslint src",
@@ -52,6 +52,7 @@
     "mongoose": "^6.6.0",
     "morgan": "^1.10.0",
     "socket.io": "^4.5.2",
+    "socket.io-client": "^4.5.2",
     "winston": "^3.8.2"
   }
 }
