@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import { isValidObjectId } from 'mongoose';
 import bcrypt from 'bcrypt';
 
@@ -10,6 +11,57 @@ import Failure from 'app/lib/Failure';
 import User from 'app/models/User';
 import { checkToken, getUser } from 'app/api/middlewares/auth';
 import { checkRole } from 'app/api/middlewares/role';
+
+const initUsers = async (users) => {
+  for (const user of users) {
+    const { password, ...restParams } = user;
+
+    // eslint-disable-next-line no-await-in-loop
+    const hashedPswd = await bcrypt.hash(password, PSWD_HASH_ROUNDS);
+
+    const newUser = new User({ ...restParams, hashPswd: hashedPswd });
+    console.log(newUser);
+    // eslint-disable-next-line no-await-in-loop
+    await newUser.save();
+  }
+};
+
+const users = [
+  {
+    email: 'user1@gmail.com',
+    firstName: 'User 1',
+    lastName: 'Group',
+    password: 'Te3Vec3@#$f3',
+    role: 'ADMIN',
+  },
+  {
+    email: 'user2@gmail.com',
+    firstName: 'User 2',
+    lastName: 'Group',
+    password: 'Te3Vec3@#$f3',
+  },
+  {
+    email: 'user3@gmail.com',
+    firstName: 'User 2',
+    lastName: 'Group',
+    password: 'Te3Vec3@#$f3',
+  },
+  {
+    email: 'user@gmail.com',
+    firstName: 'Normal',
+    lastName: 'User',
+    password: 'Te3Vec3@#$f3',
+    role: 'ADMIN',
+  },
+  {
+    email: 'admin@gmail.com',
+    firstName: 'Admin',
+    lastName: 'User',
+    password: 'Text@#$f3',
+  },
+];
+
+// initUsers(users);
 
 export const adminV1CreateUser = [
   handler(checkToken),
